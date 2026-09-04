@@ -1,0 +1,81 @@
+================================================================================
+TACTILEED: CURRENT IMPLEMENTATION STATUS & TECHNOLOGY STACK
+================================================================================
+
+1. WHAT IS CURRENTLY WORKING?
+--------------------------------------------------------------------------------
+Currently, we have implemented all 15 stages in the pipeline, including Braille
+positioning and end-to-end processing.
+
+[x] Upload scanned textbook/image
+    - Supports PNG, JPG, TIFF, and multi-page PDF rendering via PyMuPDF.
+
+[x] Detect diagram from page
+    - Page layout segmentation & bounding box candidate proposal.
+
+[x] Separate diagram from body text
+    - Region cropping, text-density masking, and connected component filtering.
+
+[x] OpenCV preprocessing
+    - Grayscale conversion, bilateral/Gaussian filtering, Otsu/adaptive thresholding, deskewing.
+
+[x] Edge detection
+    - Canny edge detection and morphological gradient filters.
+
+[x] Contour detection
+    - cv2.findContours, hierarchy tree analysis, polygon approximation (Douglas-Peucker).
+
+[x] Remove shading/background
+    - Morphological opening background subtraction and illumination normalization.
+
+[x] Convert image to line art
+    - Morphological thinning / skeletonization, noise reduction, and line normalization.
+
+[x] Vectorization
+    - Native OpenCV contour-to-vector primitives (paths, lines, polygons, circles, curves).
+
+[x] Braille generation
+    - Grade 1 English Braille translation mapping text to Unicode Braille (e.g. ⠠⠝⠥⠉⠇⠑⠥⠎).
+
+[x] Braille positioning
+    - Heuristic placement engine with collision avoidance and leader-line routing.
+
+[x] Overlap detection
+    - Bounding box / IoU collision detection between tactile graphics and Braille boxes.
+
+[x] SVG generation
+    - Structured multi-layer tactile SVGs (diagram, braille, leader lines) with tactile stroke widths.
+
+[x] PDF generation
+    - Embosser-ready tactile PDF exports.
+
+[x] Complete end-to-end pipeline
+    - Orchestrated via FastAPI workflow API and verified by automated end-to-end test suite.
+
+
+2. TECHNOLOGIES & LIBRARIES ACTUALLY USED
+--------------------------------------------------------------------------------
+
+Backend & Processing (Python):
+- FastAPI & Uvicorn: Async REST API backend and service routing.
+- OpenCV (opencv-python-headless): Image processing, thresholding, edge/contour detection, Hough line/circle transforms, connected components.
+- NumPy: Fast multidimensional array math for image masks and spatial coordinates.
+- Pillow (PIL): Image handling and format conversions.
+- scikit-image: Morphological thinning / skeletonization algorithms.
+- Shapely: 2D computational geometry, polygon intersections, and collision/overlap checks.
+- PyMuPDF (fitz): High-DPI rasterization of uploaded PDF pages.
+- svgwrite: Constructing tactile SVG graphics, groups, and Braille symbol layers.
+- ReportLab & CairoSVG: PDF rendering and vector conversion for tactile embossers.
+- Pydantic: Schema definitions, request/response validation, and state models.
+
+Frontend (Web UI):
+- React 19
+- TypeScript
+- Vite (Build tool / dev server)
+- TailwindCSS (Styling & layout)
+- HTML / CSS / JavaScript
+
+Clarification on Specific Tools:
+- Tesseract OCR: Not currently running as an external binary dependency. Text detection currently uses an OpenCV-based connected-component heuristic provider (MockOCRProvider) designed for human-in-the-loop verification/editing.
+- Potrace: Not using the external Potrace C binary. Vectorization is implemented natively via OpenCV contour extraction + Douglas-Peucker polygon approximation + geometric primitive fitting.
+================================================================================

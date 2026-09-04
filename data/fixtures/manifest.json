@@ -1,0 +1,67 @@
+{
+  "description": "TactileEd test fixtures for preprocessing pipeline evaluation",
+  "fixtures": [
+    {
+      "id": "synthetic_simple_shapes",
+      "filename": "simple_shapes.png",
+      "description": "White background with black rectangle, circle, and triangle",
+      "source": "Programmatically generated",
+      "license": "Public Domain (generated)",
+      "diagram_type": "geometric",
+      "expected_properties": {
+        "has_diagrams": true,
+        "shape_count": 3
+      }
+    },
+    {
+      "id": "synthetic_text_with_diagram",
+      "filename": "text_with_diagram.png",
+      "description": "Simulated textbook page with text lines and a diagram region",
+      "source": "Programmatically generated",
+      "license": "Public Domain (generated)",
+      "diagram_type": "mixed",
+      "expected_properties": {
+        "has_text": true,
+        "has_diagrams": true
+      }
+    },
+    {
+      "id": "synthetic_noisy",
+      "filename": "noisy_diagram.png",
+      "description": "Diagram with simulated scan noise and slight rotation",
+      "source": "Programmatically generated",
+      "license": "Public Domain (generated)",
+      "diagram_type": "noisy",
+      "expected_properties": {
+        "has_noise": true,
+        "is_skewed": true,
+        "skew_angle_degrees": 3.0
+      }
+    },
+    {
+      "id": "synthetic_low_contrast",
+      "filename": "low_contrast.png",
+      "description": "Low-contrast diagram simulating poor scan quality",
+      "source": "Programmatically generated",
+      "license": "Public Domain (generated)",
+      "diagram_type": "low_quality",
+      "expected_properties": {
+        "has_diagrams": true,
+        "low_contrast": true
+      }
+    },
+    {
+      "id": "synthetic_labeled_diagram",
+      "filename": "labeled_diagram.png",
+      "description": "Diagram with text labels placed near shapes",
+      "source": "Programmatically generated",
+      "license": "Public Domain (generated)",
+      "diagram_type": "labeled",
+      "expected_properties": {
+        "has_labels": true,
+        "label_count": 3
+      }
+    }
+  ],
+  "provenance_policy": "All fixtures are either (1) programmatically generated synthetic images, (2) scanned from out-of-copyright textbooks (pre-1927), or (3) from CC-licensed OER sources (OpenStax etc.). Provenance and license must be recorded for every fixture."
+}

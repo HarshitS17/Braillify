@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-09-01T06:15:39.991891+00:00",
+  "projects": [
+    {
+      "name": "Cell Structure",
+      "type": "biology",
+      "project_id": "1a708721-49d8-4fc9-9d0d-10bfe8a0cc8e",
+      "page_id": "e391b86d-5934-4cfd-9006-ab9ababcce00",
+      "diagram_id": "6aa22ea4-3bfc-4e98-b5e0-acfdd94ed9ee"
+    },
+    {
+      "name": "Pythagorean Theorem",
+      "type": "math",
+      "project_id": "79ce6a4d-d2c3-4967-8739-f18dea09f76e",
+      "page_id": "fc4bfc9c-ca5d-4fd7-8883-7e6146f7bb6d",
+      "diagram_id": "f494bf39-1914-4063-88d5-1d4e4ba3e100"
+    },
+    {
+      "name": "Simple Circuit",
+      "type": "circuit",
+      "project_id": "5e66b27f-e031-4a15-a745-19920d2471ba",
+      "page_id": "fe946adc-c6a7-4ddb-b883-07c6d9553dea",
+      "diagram_id": "9b8a6f5a-c7c2-4efe-b0e3-b411aec1db38"
+    }
+  ]
+}
