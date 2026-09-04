@@ -1,0 +1,44 @@
+# Vercel CLI upload exclusions (gitignore-style).
+# Keeps the deployment upload small; dependency size is controlled by
+# backend/requirements.txt (runtime-only).
+
+.git
+.vscode
+.idea
+
+# Runtime data never needed in the cloud build
+workspace/
+backend/workspace/
+backend/data/
+data/
+
+# Backend dev/QA artifacts (tests, fixtures, scratch probes)
+backend/tests/
+backend/tests_output/
+backend/qa_fixtures/
+backend/qa_fixtures.py
+backend/pytest.ini
+backend/spikes/
+backend/scripts/
+backend/.venv/
+backend/test_*
+backend/debug_*.py
+backend/probe_*.py
+backend/analyze_pdf.py
+backend/demo_*.py
+backend/generate_*.py
+backend/inspect_*.py
+backend/make_pdf_fixture.py
+backend/rasterize_probe.py
+backend/smoke_persistence.py
+backend/verify_braille.py
+backend/*.png
+backend/*.pdf
+backend/*.svg
+backend/*.docx
+
+# Local build outputs
+frontend/dist/
+node_modules/
+*.log
+

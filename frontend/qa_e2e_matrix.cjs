@@ -28,7 +28,7 @@ async function runFixture(browser, fixture) {
   try {
     await page.goto(FRONTEND, { waitUntil: 'networkidle' });
     const body = await page.textContent('body');
-    if (!body.includes('Backend connected')) throw new Error('Backend not connected on load');
+    if (!body.includes('Connected') || body.includes('Offline')) throw new Error('Backend not connected on load');
     entry.steps.push('landing: backend connected');
     await page.screenshot({ path: path.join(OUT_DIR, `${fixture}.01_home.png`) });
 
@@ -53,11 +53,32 @@ async function runFixture(browser, fixture) {
       }
     });
 
+    // New tabbed landing: enter the workspace before uploading.
+    // Wait for the hero button (the landing re-renders once /health resolves),
+    // click it, then verify the file input actually mounts; fall back to the
+    // header "Workspace" tab if not.
+    let fileInput = await page.$('input[type="file"]');
+    if (!fileInput) {
+      const openWs = await page.waitForSelector('button:has-text("Open Workspace")', { timeout: 20000 }).catch(() => null);
+      if (openWs) {
+        await page.waitForTimeout(1500); // let post-health re-render settle
+        await openWs.click().catch(() => {});
+        entry.steps.push('navigation: clicked Open Workspace');
+      }
+      await page.waitForSelector('input[type="file"]', { state: 'attached', timeout: 15000 }).catch(() => {});
+      if (!(await page.$('input[type="file"]'))) {
+        await page.click('text=Workspace').catch(() => {});
+        entry.steps.push('navigation: clicked Workspace tab (fallback)');
+        await page.waitForSelector('input[type="file"]', { state: 'attached', timeout: 30000 });
+      }
+      entry.steps.push('navigation: workspace opened');
+    }
+
     await page.setInputFiles('input[type="file"]', path.join(FIXTURES_DIR, fixture));
     entry.steps.push('upload: file selected');
-    await page.click('text=Process Page');
+    await page.click('text=Start Extraction Pipeline');
     try {
-      await page.waitForSelector('text=Region Editor', { timeout: 20000 });
+      await page.waitForSelector('text=Detected Regions', { timeout: 60000 });
       entry.steps.push('process: region editor appeared');
     } catch (e) {
       const t = await page.textContent('body');
@@ -67,23 +88,28 @@ async function runFixture(browser, fixture) {
     }
     await page.screenshot({ path: path.join(OUT_DIR, `${fixture}.02_detection.png`) });
 
-    const acceptBtn = await page.$('button:has-text("✓")');
+    const acceptBtn = await page.$('button:has-text("Accept")');
     if (acceptBtn) {
       await acceptBtn.click();
+      await page.waitForTimeout(500);
       entry.steps.push('detection: candidate accepted');
-      await page.click('text=Process & Edit ➔');
+      const editBtn = await page.waitForSelector('button:has-text("Process & Edit")', { timeout: 15000 });
+      await editBtn.click();
     } else {
       entry.steps.push('detection: NO candidates to accept — cannot proceed');
       entry.failure = 'no candidates';
       return entry;
     }
 
-    await page.waitForSelector('text=Pipeline', { timeout: 30000 }).catch(() => {});
-    await page.waitForTimeout(8000);
+    await page.waitForSelector('text=Pipeline', { timeout: 60000 }).catch(() => {});
+    // wait for the editor to render element/label stats (network + cold start)
+    // wait for the editor to load actual content (nonzero elements); blank
+    // fixtures legitimately stay at 0, so swallow the timeout for those.
+    await page.waitForFunction(() => /([1-9]\d*) elm/.test(document.body.innerText), { timeout: 90000 }).catch(() => {});
     const editorBody = await page.textContent('body');
     entry.editor = {
-      elements: editorBody.match(/(\d+) elements/)?.[1],
-      labels: editorBody.match(/(\d+) labels/)?.[1],
+      elements: editorBody.match(/(\d+) elm/)?.[1],
+      labels: editorBody.match(/(\d+) lbl/)?.[1],
     };
     entry.steps.push(`editor: rendered with ${entry.editor.elements} elements, ${entry.editor.labels} labels`);
     await page.screenshot({ path: path.join(OUT_DIR, `${fixture}.03_editor.png`) });

@@ -48,18 +48,16 @@ export default function InteractiveEditor({
     if (syncedRef.current.labels === keys.labels && syncedRef.current.elements === keys.elements) return true;
     setSaveState('saving');
     try {
-      const ops: Promise<unknown>[] = [];
+      // Sequential PUTs (labels, then elements) — see note in the mount
+      // effect about serverless instance routing.
       if (syncedRef.current.labels !== keys.labels) {
-        ops.push(
-          apiClient.replaceLabels(projectId, pageId, diagramId, snapshot.labels).then(() => { syncedRef.current.labels = keys.labels; })
-        );
+        await apiClient.replaceLabels(projectId, pageId, diagramId, snapshot.labels);
+        syncedRef.current.labels = keys.labels;
       }
       if (syncedRef.current.elements !== keys.elements) {
-        ops.push(
-          apiClient.updateDiagramElements(projectId, pageId, diagramId, snapshot.elements).then(() => { syncedRef.current.elements = keys.elements; })
-        );
+        await apiClient.updateDiagramElements(projectId, pageId, diagramId, snapshot.elements);
+        syncedRef.current.elements = keys.elements;
       }
-      await Promise.all(ops);
       setSaveState('saved');
       return true;
     } catch (err) {
@@ -86,10 +84,12 @@ export default function InteractiveEditor({
   useEffect(() => {
     (async () => {
       try {
-        const [data, labels] = await Promise.all([
-          apiClient.getDiagram(projectId, pageId, diagramId),
-          apiClient.getLabels(projectId, pageId, diagramId),
-        ]);
+        // Sequential (not Promise.all) on purpose: on serverless deployments
+        // each in-flight request can land on a different instance with its own
+        // ephemeral storage; issuing one request at a time keeps the whole
+        // session on a single warm instance.
+        const data = await apiClient.getDiagram(projectId, pageId, diagramId);
+        const labels = await apiClient.getLabels(projectId, pageId, diagramId);
         setDiagram(data);
         editor.loadDiagram(data.elements || [], labels || []);
         syncedRef.current = keysOf({ elements: data.elements || [], labels: labels || [] });

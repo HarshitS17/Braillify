@@ -39,7 +39,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             >
               Open Workspace
             </button>
-            <a href="https://github.com/your-repo/TextileEd" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold leading-6 text-slate-900 flex items-center gap-2 hover:text-indigo-600 transition-colors">
+            <a href="https://github.com/HarshitS17/Braillify" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold leading-6 text-slate-900 flex items-center gap-2 hover:text-indigo-600 transition-colors">
               View Documentation <span aria-hidden="true">→</span>
             </a>
           </div>
