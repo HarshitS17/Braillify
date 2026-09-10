@@ -5,7 +5,7 @@ interface RegionEditorProps {
   imageUrl: string;
   initialCandidates: DiagramCandidate[];
   onSave: (candidates: DiagramCandidate[]) => void;
-  onEditDiagram?: (diagramId: string) => void;
+  onEditDiagram?: (diagramId: string, currentCandidates: DiagramCandidate[]) => void;
   imageWidth: number;
   imageHeight: number;
 }
@@ -196,7 +196,7 @@ export const RegionEditor: React.FC<RegionEditorProps> = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onEditDiagram(c.id);
+                        onEditDiagram(c.id, candidates);
                       }}
                       className="w-full py-1.5 text-xs font-bold text-white bg-indigo-600 rounded shadow-sm hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1"
                     >

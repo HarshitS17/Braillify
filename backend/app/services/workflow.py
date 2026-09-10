@@ -172,7 +172,13 @@ class WorkflowService:
         if image is None:
             raise ValueError("Failed to load extracted image for OCR")
             
-        provider = MockOCRProvider()
+        from ..pipeline.ocr.tesseract import TesseractOCRProvider
+        from ..pipeline.ocr.mock import MockOCRProvider
+        
+        provider = TesseractOCRProvider()
+        if not getattr(provider, 'is_available', False):
+            provider = MockOCRProvider()
+            
         labels = extract_labels(diagram, image, provider)
         
         # Merge with existing labels

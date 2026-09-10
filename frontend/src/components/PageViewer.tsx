@@ -267,9 +267,9 @@ export const PageViewer: React.FC<{onDiagramSelected?: (projectId: string, pageI
               imageWidth={imageDims.width}
               imageHeight={imageDims.height}
               onSave={handleSaveRegions}
-              onEditDiagram={async (diagramId) => {
+              onEditDiagram={async (diagramId, currentCandidates) => {
                 if (onDiagramSelected && project && pageId) {
-                  await handleSaveRegions(candidates);
+                  await handleSaveRegions(currentCandidates);
                   
                   setError(null);
                   setCurrentStep(0);
