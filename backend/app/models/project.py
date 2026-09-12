@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 from enum import Enum
 import uuid
+import secrets
 
 class ProjectStatus(str, Enum):
     CREATED = "created"
@@ -23,6 +24,10 @@ class ProjectSummary(BaseModel):
     updated_at: datetime
     page_count: int = 0
 
+class ProjectCreateResponse(ProjectSummary):
+    """Returned only on project creation — includes the owner token."""
+    owner_token: str
+
 class Project(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
@@ -32,3 +37,4 @@ class Project(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     page_count: int = 0
     workspace_path: str = ""
+    owner_token: str = Field(default_factory=lambda: secrets.token_urlsafe(32))

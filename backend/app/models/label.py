@@ -39,5 +39,6 @@ class Label(BaseModel):
     braille: BrailleRepresentation = Field(default_factory=BrailleRepresentation)
     source: LabelSource = LabelSource.GENERATED
     ocr_confidence: float | None = None
+    needs_review: bool = False  # Auto-set when OCR confidence < threshold
     placement: LabelPlacement | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)

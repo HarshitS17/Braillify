@@ -28,6 +28,9 @@ def extract_labels(diagram: Diagram, image: np.ndarray, provider: OCRProvider) -
             # Extract text
             text, confidence = provider.extract_text(image, element.geometry)
             
+            # Flag for human review when OCR confidence is low
+            needs_review = confidence < 0.6
+            
             # Create a label
             label = Label(
                 diagram_id=diagram.id,
@@ -36,7 +39,8 @@ def extract_labels(diagram: Diagram, image: np.ndarray, provider: OCRProvider) -
                 text=text,
                 source=LabelSource.OCR,
                 ocr_confidence=confidence,
-                metadata={"auto_extracted": True}
+                needs_review=needs_review,
+                metadata={"auto_extracted": True, "review_reason": "low_ocr_confidence" if needs_review else None}
             )
             labels.append(label)
             

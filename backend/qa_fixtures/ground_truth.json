@@ -1,0 +1,60 @@
+{
+  "fixtures": {
+    "01_simple_biology.png": {
+      "expected_diagrams": 1,
+      "ground_truth_bbox": {"x": 250, "y": 100, "width": 500, "height": 520},
+      "expected_labels": ["Cell", "Wall", "Nucleus", "Vacuole", "Plant Cell"],
+      "diagram_type": "biology",
+      "notes": "Single cell diagram with labeled parts"
+    },
+    "02_complex_biology.png": {
+      "expected_diagrams": 1,
+      "ground_truth_bbox": {"x": 150, "y": 50, "width": 700, "height": 600},
+      "expected_labels": ["Nucleus", "Cell Membrane", "Mitochondria", "Endoplasmic Reticulum", "Golgi Apparatus"],
+      "diagram_type": "biology",
+      "notes": "Complex cell with many organelles"
+    },
+    "03_math_graph.png": {
+      "expected_diagrams": 1,
+      "ground_truth_bbox": {"x": 100, "y": 50, "width": 800, "height": 600},
+      "expected_labels": ["x", "y", "f(x)"],
+      "diagram_type": "math",
+      "notes": "Coordinate axes with function curve"
+    },
+    "04_physics.png": {
+      "expected_diagrams": 1,
+      "ground_truth_bbox": {"x": 100, "y": 50, "width": 800, "height": 600},
+      "expected_labels": ["F", "d", "m"],
+      "diagram_type": "physics",
+      "notes": "Force diagram with vectors"
+    },
+    "05_circuit.png": {
+      "expected_diagrams": 1,
+      "ground_truth_bbox": {"x": 100, "y": 50, "width": 800, "height": 600},
+      "expected_labels": ["R1", "R2", "V"],
+      "diagram_type": "circuit",
+      "notes": "Simple resistor circuit"
+    },
+    "06_low_quality_scan.png": {
+      "expected_diagrams": 1,
+      "ground_truth_bbox": {"x": 50, "y": 50, "width": 900, "height": 600},
+      "expected_labels": [],
+      "diagram_type": "biology",
+      "notes": "Low quality noisy scan — detection is the challenge here"
+    },
+    "07_dense_diagram.png": {
+      "expected_diagrams": 1,
+      "ground_truth_bbox": {"x": 100, "y": 50, "width": 800, "height": 600},
+      "expected_labels": [],
+      "diagram_type": "biology",
+      "notes": "Dense diagram with many overlapping elements"
+    },
+    "08_blank.png": {
+      "expected_diagrams": 0,
+      "ground_truth_bbox": null,
+      "expected_labels": [],
+      "diagram_type": null,
+      "notes": "Blank white page — should detect zero diagrams"
+    }
+  }
+}

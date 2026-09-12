@@ -84,12 +84,11 @@ export default function InteractiveEditor({
   useEffect(() => {
     (async () => {
       try {
-        // Sequential (not Promise.all) on purpose: on serverless deployments
-        // each in-flight request can land on a different instance with its own
-        // ephemeral storage; issuing one request at a time keeps the whole
-        // session on a single warm instance.
-        const data = await apiClient.getDiagram(projectId, pageId, diagramId);
-        const labels = await apiClient.getLabels(projectId, pageId, diagramId);
+        // Concurrent reads — safe now that storage is durable (Vercel Blob).
+        const [data, labels] = await Promise.all([
+          apiClient.getDiagram(projectId, pageId, diagramId),
+          apiClient.getLabels(projectId, pageId, diagramId),
+        ]);
         setDiagram(data);
         editor.loadDiagram(data.elements || [], labels || []);
         syncedRef.current = keysOf({ elements: data.elements || [], labels: labels || [] });

@@ -26,11 +26,20 @@ async def test_get_project_not_found(client):
 @pytest.mark.asyncio
 async def test_delete_project(client):
     resp = await client.post("/api/projects", json={"name": "To Delete"})
-    project_id = resp.json()["id"]
-    del_resp = await client.delete(f"/api/projects/{project_id}")
+    data = resp.json()
+    project_id = data["id"]
+    token = data["owner_token"]
+    del_resp = await client.delete(f"/api/projects/{project_id}", headers={"x-owner-token": token})
     assert del_resp.status_code == 204
     get_resp = await client.get(f"/api/projects/{project_id}")
     assert get_resp.status_code == 404
+
+@pytest.mark.asyncio
+async def test_delete_project_unauthorized(client):
+    resp = await client.post("/api/projects", json={"name": "To Delete Auth"})
+    project_id = resp.json()["id"]
+    del_resp = await client.delete(f"/api/projects/{project_id}", headers={"x-owner-token": "wrong-token"})
+    assert del_resp.status_code == 403
 
 @pytest.mark.asyncio
 async def test_create_project_empty_name(client):
