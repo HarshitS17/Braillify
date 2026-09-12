@@ -156,3 +156,19 @@ def simplify_diagram(elements: list[DiagramElement], config: SimplificationConfi
             final_elements.append(el1)
             
     return final_elements
+
+def count_total_vertices(elements: list[DiagramElement]) -> int:
+    """Total point count across all elements — the DP-simplification signal.
+    POLYGON/CURVE contribute len(points); other element types contribute 1
+    each, since they don't carry a variable-length point list."""
+    total = 0
+    for el in elements:
+        if el.type in (ElementType.POLYGON, ElementType.CURVE):
+            pts = el.geometry.get("points", [])
+            total += max(len(pts), 1)
+        elif el.type == ElementType.ARROW and "points" in el.geometry.get("path", {}):
+            pts = el.geometry["path"].get("points", [])
+            total += max(len(pts), 1)
+        else:
+            total += 1
+    return total

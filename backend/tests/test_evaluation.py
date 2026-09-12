@@ -51,6 +51,27 @@ def test_simplification_half():
 def test_simplification_empty_original():
     assert calculate_simplification_ratio(0, 0) == 1.0
 
+# ── Vertex Reduction Ratio Tests ──
+
+from app.models.diagram import DiagramElement, ElementType
+from app.pipeline.simplification import count_total_vertices
+from app.pipeline.evaluation import calculate_vertex_reduction_ratio
+
+def test_vertex_reduction():
+    assert calculate_vertex_reduction_ratio(10, 5) == 0.5
+    assert calculate_vertex_reduction_ratio(10, 10) == 1.0
+    assert calculate_vertex_reduction_ratio(0, 0) == 1.0
+
+def test_count_total_vertices():
+    el1 = DiagramElement(type=ElementType.POLYGON, geometry={"points": [{"x":0,"y":0}] * 8})
+    el2 = DiagramElement(type=ElementType.LINE, geometry={"x1":0, "y1":0, "x2":1, "y2":1})
+    el3 = DiagramElement(type=ElementType.ARROW, geometry={"path": {"points": [{"x":0,"y":0}] * 3}})
+    assert count_total_vertices([el1, el2, el3]) == 8 + 1 + 3
+
+    # Check DP reduction
+    el1_simp = DiagramElement(type=ElementType.POLYGON, geometry={"points": [{"x":0,"y":0}] * 4})
+    assert count_total_vertices([el1_simp, el2, el3]) == 4 + 1 + 3
+
 # ── Collision Rate Tests ──
 
 def test_collision_rate_no_collisions():

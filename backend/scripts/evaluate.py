@@ -118,38 +118,109 @@ def evaluate_detection(ground_truth: dict) -> dict:
     }
 
 
-def evaluate_simplification() -> dict:
-    """Run analysis + simplification on a representative fixture and
-    report the element reduction ratio."""
-    img_path = QA_DIR / "01_simple_biology.png"
-    if not img_path.exists():
-        return {"error": "fixture missing"}
+from app.pipeline.preprocessing import preprocess_image
+from app.pipeline.extraction import extract_diagram
+from app.models.preprocessing import PreprocessingConfig
+from app.models.extraction import ExtractionConfig
+from app.pipeline.evaluation import calculate_simplification_ratio, calculate_vertex_reduction_ratio
+from app.pipeline.simplification import count_total_vertices
 
-    img = cv2.imread(str(img_path))
-    if img is None:
-        return {"error": "unreadable"}
+def evaluate_simplification(ground_truth: dict) -> dict:
+    """Run preprocess -> extract -> analyze -> simplify on all fixtures."""
+    per_fixture = []
+    total_original_elements = 0
+    total_simplified_elements = 0
+    total_original_vertices = 0
+    total_simplified_vertices = 0
+    total_analysis_ms = 0.0
+    total_simplify_ms = 0.0
 
-    diagram = Diagram(project_id="eval", page_id="p1")
+    for filename, gt in ground_truth.items():
+        img_path = QA_DIR / filename
+        if not img_path.exists():
+            continue
 
-    t0 = time.perf_counter()
-    elements = analyze_structure(img, AnalysisConfig())
-    dt_analysis = time.perf_counter() - t0
+        gt_bbox = gt.get("ground_truth_bbox")
+        if not gt_bbox:
+            # Skip fixtures without a diagram to simplify
+            continue
 
-    original_count = len(elements)
+        img = cv2.imread(str(img_path))
+        if img is None:
+            continue
 
-    t0 = time.perf_counter()
-    simplified_elements = simplify_diagram(elements, SimplificationConfig())
-    dt_simplify = time.perf_counter() - t0
+        # 1. Preprocess
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            preprocessed = preprocess_image(
+                image_path=img_path,
+                output_dir=tmp_path,
+                config=PreprocessingConfig()
+            )
+            # 2. Extract
+            prep_img = cv2.imread(str(preprocessed.preprocessed_path))
+            bbox = BoundingBox(**gt_bbox)
+            cropped, _ = extract_diagram(prep_img, bbox, ExtractionConfig())
 
-    simplified_count = len(simplified_elements)
-    reduction = 1.0 - (simplified_count / original_count) if original_count > 0 else 0.0
+        # 3. Analyze
+        t0 = time.perf_counter()
+        elements = analyze_structure(cropped, AnalysisConfig())
+        dt_analysis = (time.perf_counter() - t0) * 1000
+        
+        orig_count = len(elements)
+        orig_vertices = count_total_vertices(elements)
 
+        # 4. Simplify
+        t0 = time.perf_counter()
+        simplified_elements = simplify_diagram(elements, SimplificationConfig())
+        dt_simplify = (time.perf_counter() - t0) * 1000
+
+        simp_count = len(simplified_elements)
+        simp_vertices = count_total_vertices(simplified_elements)
+        
+        elem_ratio = calculate_simplification_ratio(orig_count, simp_count)
+        vert_ratio = calculate_vertex_reduction_ratio(orig_vertices, simp_vertices)
+        
+        elem_reduction_pct = (1.0 - elem_ratio) * 100
+        vert_reduction_pct = (1.0 - vert_ratio) * 100
+
+        per_fixture.append({
+            "file": filename,
+            "orig_elem": orig_count,
+            "simp_elem": simp_count,
+            "elem_red_pct": round(elem_reduction_pct, 1),
+            "orig_vert": orig_vertices,
+            "simp_vert": simp_vertices,
+            "vert_red_pct": round(vert_reduction_pct, 1),
+            "analysis_ms": round(dt_analysis, 1),
+            "simplify_ms": round(dt_simplify, 1)
+        })
+
+        total_original_elements += orig_count
+        total_simplified_elements += simp_count
+        total_original_vertices += orig_vertices
+        total_simplified_vertices += simp_vertices
+        total_analysis_ms += dt_analysis
+        total_simplify_ms += dt_simplify
+
+        print(f"  {filename}: {orig_count} -> {simp_count} elems ({elem_reduction_pct:.1f}%), "
+              f"{orig_vertices} -> {simp_vertices} verts ({vert_reduction_pct:.1f}%)")
+
+    # Averages across all fixtures
+    overall_elem_ratio = calculate_simplification_ratio(total_original_elements, total_simplified_elements)
+    overall_vert_ratio = calculate_vertex_reduction_ratio(total_original_vertices, total_simplified_vertices)
+    
     return {
-        "original_elements": original_count,
-        "simplified_elements": simplified_count,
-        "reduction_pct": round(reduction * 100, 1),
-        "analysis_ms": round(dt_analysis * 1000, 1),
-        "simplification_ms": round(dt_simplify * 1000, 1),
+        "original_elements": total_original_elements,
+        "simplified_elements": total_simplified_elements,
+        "elem_reduction_pct": round((1.0 - overall_elem_ratio) * 100, 1),
+        "original_vertices": total_original_vertices,
+        "simplified_vertices": total_simplified_vertices,
+        "vert_reduction_pct": round((1.0 - overall_vert_ratio) * 100, 1),
+        "analysis_ms": round(total_analysis_ms, 1),
+        "simplification_ms": round(total_simplify_ms, 1),
+        "per_fixture": per_fixture
     }
 
 
@@ -183,11 +254,23 @@ def generate_report(detection: dict, simplification: dict) -> str:
     lines += [
         "",
         "## 2. Tactile Simplification",
-        f"- **Original Elements**: {simplification.get('original_elements', '?')}",
-        f"- **Simplified Elements**: {simplification.get('simplified_elements', '?')}",
-        f"- **Feature Reduction**: {simplification.get('reduction_pct', '?')}%",
-        f"- **Analysis Time**: {simplification.get('analysis_ms', '?')}ms",
-        f"- **Simplification Time**: {simplification.get('simplification_ms', '?')}ms",
+        f"- **Whole-element reduction (drops + deduplication)**: {simplification.get('elem_reduction_pct', '?')}%",
+        f"- **Vertex/feature reduction (Douglas-Peucker)**: {simplification.get('vert_reduction_pct', '?')}%",
+        f"- **Total Analysis Time**: {simplification.get('analysis_ms', '?')}ms",
+        f"- **Total Simplification Time**: {simplification.get('simplification_ms', '?')}ms",
+        "",
+        "### Per-Fixture Results",
+        "| Fixture | Orig Elems | Simp Elems | Elem Red % | Orig Verts | Simp Verts | Vert Red % | Analysis (ms) | Simplify (ms) |",
+        "|---------|------------|------------|------------|------------|------------|------------|---------------|---------------|",
+    ]
+    
+    for r in simplification.get("per_fixture", []):
+        lines.append(
+            f"| {r['file']} | {r['orig_elem']} | {r['simp_elem']} | {r['elem_red_pct']}% | "
+            f"{r['orig_vert']} | {r['simp_vert']} | {r['vert_red_pct']}% | {r['analysis_ms']} | {r['simplify_ms']} |"
+        )
+
+    lines += [
         "",
         "## 3. Label Placement",
         "- **Collision Rate**: *(requires full pipeline run with labels)*",
@@ -209,8 +292,8 @@ def main():
     print(f"\n  Summary: P={detection['precision']} R={detection['recall']} F1={detection['f1']} IoU={detection['mean_iou']}")
 
     print("\n--- 2. Simplification ---")
-    simplification = evaluate_simplification()
-    print(f"  {simplification.get('original_elements', '?')} → {simplification.get('simplified_elements', '?')} elements ({simplification.get('reduction_pct', '?')}% reduction)")
+    simplification = evaluate_simplification(gt)
+    print(f"  Summary: {simplification.get('elem_reduction_pct')}% element reduction, {simplification.get('vert_reduction_pct')}% vertex reduction")
 
     report = generate_report(detection, simplification)
     with open(REPORT_PATH, "w") as f:

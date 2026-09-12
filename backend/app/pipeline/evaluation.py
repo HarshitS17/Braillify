@@ -20,10 +20,21 @@ def calculate_iou(box1: BoundingBox, box2: BoundingBox) -> float:
     return inter_area / union_area
 
 def calculate_simplification_ratio(original_count: int, simplified_count: int) -> float:
-    """Returns ratio of elements preserved (0.0 to 1.0). Lower means more simplified."""
+    """Returns ratio of elements preserved (0.0 to 1.0). Lower means more simplified.
+    Note: This only measures whole-element drops/deduplication. It cannot see
+    vertex-level reduction (e.g. Douglas-Peucker)."""
     if original_count == 0:
         return 1.0
     return simplified_count / original_count
+
+def calculate_vertex_reduction_ratio(original_vertex_count: int, simplified_vertex_count: int) -> float:
+    """Ratio of vertices/points preserved (0.0 to 1.0). Lower means more
+    geometric detail was removed by DP simplification. Distinct from
+    calculate_simplification_ratio, which only measures whole-element
+    drops/deduplication and cannot see vertex-level reduction."""
+    if original_vertex_count == 0:
+        return 1.0
+    return simplified_vertex_count / original_vertex_count
 
 def calculate_collision_rate(diagram: Diagram, labels: list[Label]) -> float:
     """Returns percentage of labels that have a collision with geometry or other labels."""
